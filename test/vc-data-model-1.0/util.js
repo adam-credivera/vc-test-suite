@@ -20,7 +20,7 @@ async function generate(file, options) {
 async function generateFromRestapi(file, options) {
   const url = `${options.baseUrl}${options.generator}`;
   const fileContent = fs.readFileSync(path.join(__dirname, 'input', file), 'utf8');
-  const dataToIssue = createIssuanceData(fileContent, options.generatorOptions);
+  const dataToIssue = createIssuanceData(fileContent, options.generatorOptions, options.overrideIssuer);
   const axiosOptions = {
     timeout: 2000,
     headers: {
@@ -28,6 +28,7 @@ async function generateFromRestapi(file, options) {
       'Authorization': `${options.oauthTokenType} ${options.oauthToken}`
     }
   }
+  console.log(dataToIssue);
   try {
     const response = await axios.post(url, dataToIssue, axiosOptions);
     return response.data?.verifiableCredential ? response.data.verifiableCredential : {};
@@ -137,8 +138,15 @@ const RFC3339regex = new RegExp('^(\\d{4})-(0[1-9]|1[0-2])-' +
  * @param {String} unsigned_jsonld A string of an unsigend jsonld
  * @returns {String} A jsonld to be used against REST APIs
  */
-function createIssuanceData(unsigned_jsonld, options) {
-  return JSON.stringify({ credential: JSON.parse(unsigned_jsonld), options: options });
+function createIssuanceData(unsigned_jsonld, options, overrideIssuer) {
+  let parsedJsonld = JSON.parse(unsigned_jsonld);
+  if (overrideIssuer
+      && parsedJsonld.issuer
+      && typeof parsedJsonld.issuer === 'string'
+      && (parsedJsonld.issuer.startsWith('http') || parsedJsonld.issuer.startsWith('did:')) ) {
+    parsedJsonld.issuer = overrideIssuer;
+  }
+  return JSON.stringify({ credential: parsedJsonld, options: options });
 }
 
 module.exports = {
