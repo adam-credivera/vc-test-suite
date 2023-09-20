@@ -140,6 +140,7 @@ const RFC3339regex = new RegExp('^(\\d{4})-(0[1-9]|1[0-2])-' +
  */
 function createIssuanceData(unsigned_jsonld, options, overrideIssuer) {
   let parsedJsonld = JSON.parse(unsigned_jsonld);
+  // Only override the issuer if the testdata file contains a valid issuer value
   if (overrideIssuer
       && parsedJsonld.issuer
       && typeof parsedJsonld.issuer === 'string'
