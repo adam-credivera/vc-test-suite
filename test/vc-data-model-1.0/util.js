@@ -72,6 +72,7 @@ async function generatePresentation(file, options) {
 
 async function generatePresentationFromRestapi(file, options) {
   const fileContent = fs.readFileSync(path.join(__dirname, 'input', file), 'utf8');
+  const dataToIssue = createPresentationData(fileContent, options.generatorOptions);
   const url = `${options.baseUrl}${options.presentationGenerator}`;
   const axiosOptions = {
     timeout: 2000,
@@ -81,8 +82,8 @@ async function generatePresentationFromRestapi(file, options) {
     }
   }
   try {
-    const response = await axios.post(url, fileContent, axiosOptions);
-    return response.data?.verifiableCredential ? response.data.verifiableCredential : {};
+    const response = await axios.post(url, dataToIssue, axiosOptions);
+    return response.data?.verifiablePresentation ? response.data.verifiablePresentation : {};
   } catch (error) {
     throw error;
   }
@@ -134,8 +135,9 @@ const RFC3339regex = new RegExp('^(\\d{4})-(0[1-9]|1[0-2])-' +
   '([0-5][0-9]))$', 'i');
 
 /**
- *
- * @param {String} unsigned_jsonld A string of an unsigend jsonld
+ * Transform a test input jsonld file to a payload for a REST credentials/issue
+ * @param {String} unsigned_jsonld A string of an unsigned credential jsonld
+ * @param {Object} options The arguments that should be passed to the VC generator
  * @returns {String} A jsonld to be used against REST APIs
  */
 function createIssuanceData(unsigned_jsonld, options, overrideIssuer) {
@@ -148,6 +150,16 @@ function createIssuanceData(unsigned_jsonld, options, overrideIssuer) {
     parsedJsonld.issuer = overrideIssuer;
   }
   return JSON.stringify({ credential: parsedJsonld, options: options });
+}
+
+/**
+ * Transform a test input jsonld file to a payload for a REST presentation/prove
+ * @param {String} unsigned_jsonld A string of an unsigned presentation jsonld
+ * @param {String} options The arguments that should be passed to the VP generator
+ * @returns {String} A jsonld to be used against REST APIs
+ */
+function createPresentationData(unsigned_jsonld, options) {
+  return JSON.stringify({ presentation: JSON.parse(unsigned_jsonld), options });
 }
 
 module.exports = {
