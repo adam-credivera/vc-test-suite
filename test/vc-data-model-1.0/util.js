@@ -28,7 +28,6 @@ async function generateFromRestapi(file, options) {
       'Authorization': `${options.oauthTokenType} ${options.oauthToken}`
     }
   }
-  console.log(dataToIssue);
   try {
     const response = await axios.post(url, dataToIssue, axiosOptions);
     return response.data?.verifiableCredential ? response.data.verifiableCredential : {};
